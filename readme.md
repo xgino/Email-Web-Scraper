@@ -36,7 +36,9 @@ The Email Scraper is a Python-based tool that extracts publicly available email 
 ## Scraper Output  
 The scraped data is saved in `./data/email_list.csv` with the following columns:
 
-- **emails**: Emails
+- **emails**: Email(s)
+- **Title**: Meta Title
+- **Description**: Meta Description
 
 
 ## Support  
