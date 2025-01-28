@@ -41,10 +41,14 @@ class GetMail:
                         except Exception:
                             results.append(None)
 
-                    batch['scraped_emails'] = results
+                    batch['scraped_emails'] = [res['emails'] if res else None for res in results]
                     batch['emails'] = batch['scraped_emails'].apply(self._filter_unusual_emails)
-                    batch['scraped_emails'], batch['business_name'], batch['industry'] = zip(*results)
-                    
+
+                    batch['title'] = [res['title'] if res else None for res in results]
+                    batch['site_name'] = [res['site_name'] if res else None for res in results]
+                    batch['description'] = [res['description'] if res else None for res in results]
+                    batch['keywords'] = [res['keywords'] if res else None for res in results]
+
                     self._save_results(batch)
                     progress_bar.update(len(batch))
 
@@ -60,24 +64,45 @@ class GetMail:
                 return None  # Handle blocked access
             soup = BeautifulSoup(response.content, 'html.parser')
             emails = self._find_emails(soup)
+
+            # Extract business info (title, site_name, description, keywords)
+            title, site_name, description, keywords = self._extract_business_info(soup)
+
             if not emails:
                 contact_url = url.rstrip('/') + '/contact'
                 emails = self._fetch_contact_page_emails(contact_url, session)
-            # Extract business info
-            business_name, industry = self._extract_business_info(soup)
-            return emails or None, business_name, industry
+
+            return {"emails": emails or None, "title": title or None, "site_name": site_name or None, "description": description or None, "keywords": keywords or None}
         except requests.RequestException:
-            return None, None, None
+            return None
 
     def _extract_business_info(self, soup):
-        # Extract business name from the title tag
-        title = soup.title.string.strip() if soup.title and soup.title.string else None
+        # Extract title (only og:title)
+        title = ''
+        og_title = soup.find("meta", attrs={"property": "og:title"})
+        if og_title and "content" in og_title.attrs:
+            title = og_title["content"].strip()
 
-        # Extract industry info from meta description
-        meta_desc = soup.find("meta", attrs={"name": "description"})
-        industry = meta_desc["content"].strip() if meta_desc and "content" in meta_desc.attrs else None
+        # Extract site name (only og:site_name)
+        site_name = ''
+        og_site_name = soup.find("meta", attrs={"property": "og:site_name"})
+        if og_site_name and "content" in og_site_name.attrs:
+            site_name = og_site_name["content"].strip()
 
-        return title, industry
+        # Extract description (only og:description)
+        description = ''
+        og_description = soup.find("meta", attrs={"property": "og:description"})
+        if og_description and "content" in og_description.attrs:
+            description = og_description["content"].strip()
+
+        # Extract keywords (only og:keywords)
+        keywords = ''
+        og_keywords = soup.find("meta", attrs={"property": "og:keywords"})
+        if og_keywords and "content" in og_keywords.attrs:
+            keywords = og_keywords["content"].strip()
+
+        return title, site_name, description, keywords
+    
 
     def _fetch_contact_page_emails(self, contact_url, session):
         retries = 3  # Number of retries
