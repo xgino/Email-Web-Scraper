@@ -43,6 +43,7 @@ class GetMail:
 
                     batch['scraped_emails'] = results
                     batch['emails'] = batch['scraped_emails'].apply(self._filter_unusual_emails)
+                    batch['scraped_emails'], batch['business_name'], batch['industry'] = zip(*results)
                     
                     self._save_results(batch)
                     progress_bar.update(len(batch))
@@ -62,12 +63,21 @@ class GetMail:
             if not emails:
                 contact_url = url.rstrip('/') + '/contact'
                 emails = self._fetch_contact_page_emails(contact_url, session)
-            return emails or None
-        except requests.RequestException as e:
-            #print(f"Request error for {url}: {e}")
-            return None
+            # Extract business info
+            business_name, industry = self._extract_business_info(soup)
+            return emails or None, business_name, industry
+        except requests.RequestException:
+            return None, None, None
 
+    def _extract_business_info(self, soup):
+        # Extract business name from the title tag
+        title = soup.title.string.strip() if soup.title and soup.title.string else None
 
+        # Extract industry info from meta description
+        meta_desc = soup.find("meta", attrs={"name": "description"})
+        industry = meta_desc["content"].strip() if meta_desc and "content" in meta_desc.attrs else None
+
+        return title, industry
 
     def _fetch_contact_page_emails(self, contact_url, session):
         retries = 3  # Number of retries
