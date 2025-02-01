@@ -48,6 +48,9 @@ class GetMail:
                     batch['site_name'] = [res['site_name'] if res else None for res in results]
                     batch['description'] = [res['description'] if res else None for res in results]
                     batch['keywords'] = [res['keywords'] if res else None for res in results]
+                    batch['category'] = [res['category'] if res else None for res in results]
+                    batch['business_category'] = [res['business_category'] if res else None for res in results]
+                    batch['locale'] = [res['locale'] if res else None for res in results]
 
                     self._save_results(batch)
                     progress_bar.update(len(batch))
@@ -65,43 +68,56 @@ class GetMail:
             soup = BeautifulSoup(response.content, 'html.parser')
             emails = self._find_emails(soup)
 
-            # Extract business info (title, site_name, description, keywords)
-            title, site_name, description, keywords = self._extract_business_info(soup)
+            # Extract business info (title, site_name, description, keywords, category, business_category, locale)
+            title, site_name, description, keywords, category, business_category, locale = self._extract_business_info(soup)
 
             if not emails:
                 contact_url = url.rstrip('/') + '/contact'
                 emails = self._fetch_contact_page_emails(contact_url, session)
 
-            return {"emails": emails or None, "title": title or None, "site_name": site_name or None, "description": description or None, "keywords": keywords or None}
+            return {"emails": emails or None, "title": title or None, "site_name": site_name or None, "description": description or None, "keywords": keywords or None, "category": category or None, "business_category": business_category or None, "locale": locale or None}
         except requests.RequestException:
             return None
 
     def _extract_business_info(self, soup):
-        # Extract title (only og:title)
-        title = ''
-        og_title = soup.find("meta", attrs={"property": "og:title"})
-        if og_title and "content" in og_title.attrs:
-            title = og_title["content"].strip()
+        # Extract Open Graph (OG) meta tags
+        def get_meta_content(prop_name, attr="property"):
+            tag = soup.find("meta", attrs={attr: prop_name})
+            return tag["content"].strip() if tag and "content" in tag.attrs else ''
 
-        # Extract site name (only og:site_name)
-        site_name = ''
-        og_site_name = soup.find("meta", attrs={"property": "og:site_name"})
-        if og_site_name and "content" in og_site_name.attrs:
-            site_name = og_site_name["content"].strip()
+        title = get_meta_content("og:title")
+        site_name = get_meta_content("og:site_name")
+        description = get_meta_content("og:description")
+        keywords = get_meta_content("og:keywords")
+        category = get_meta_content("business:category")  # Some sites use this
+        locale = get_meta_content("og:locale")  # Language
 
-        # Extract description (only og:description)
-        description = ''
-        og_description = soup.find("meta", attrs={"property": "og:description"})
-        if og_description and "content" in og_description.attrs:
-            description = og_description["content"].strip()
+        # Extract standard meta tags (some sites use these instead of OG tags)
+        std_description = get_meta_content("description", "name")
+        std_keywords = get_meta_content("keywords", "name")
 
-        # Extract keywords (only og:keywords)
-        keywords = ''
-        og_keywords = soup.find("meta", attrs={"property": "og:keywords"})
-        if og_keywords and "content" in og_keywords.attrs:
-            keywords = og_keywords["content"].strip()
+        # Extract Schema.org JSON-LD (if available)
+        schema_data = soup.find("script", type="application/ld+json")
+        business_category = ""
+        if schema_data:
+            import json
+            try:
+                json_data = json.loads(schema_data.string)
+                if isinstance(json_data, list):  # Sometimes JSON-LD is an array
+                    json_data = json_data[0]
+                business_category = json_data.get("@type", "")
+            except json.JSONDecodeError:
+                pass
 
-        return title, site_name, description, keywords
+        # Prioritize standard description if OG is missing
+        if not description and std_description:
+            description = std_description
+
+        # Prioritize standard keywords if OG is missing
+        if not keywords and std_keywords:
+            keywords = std_keywords
+
+        return title, site_name, description, keywords, category, business_category, locale
     
 
     def _fetch_contact_page_emails(self, contact_url, session):

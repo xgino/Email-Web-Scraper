@@ -41,6 +41,9 @@ The scraped data is saved in `./data/email_list.csv` with the following columns:
 - **site_name**: Meta site_name
 - **description**: Meta description
 - **keywords**: Meta keywords
+- **category**: Meta category
+- **business_category**: Meta business_category
+- **locale**: Meta locale
 
 
 ## Support  
