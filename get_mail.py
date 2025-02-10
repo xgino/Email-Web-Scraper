@@ -71,9 +71,32 @@ class GetMail:
             # Extract business info (title, site_name, description, keywords, category, business_category, locale)
             title, site_name, description, keywords, category, business_category, locale = self._extract_business_info(soup)
 
+            # Check possible pages for contact
             if not emails:
-                contact_url = url.rstrip('/') + '/contact'
-                emails = self._fetch_contact_page_emails(contact_url, session)
+                contact_paths = [
+                    "/contact", "/contact/", 
+                    "/contact-us", "/contact-us/", 
+                    "/contact_us", "/contact_us/", 
+                    "/contactus", "/contactus/", 
+                    "/get-in-touch", "/get-in-touch/", 
+                    "/reach-us", "/reach-us/", 
+                    "/connect", "/connect/", 
+                    "/team", "/team/", 
+                    "/info", "/info/", 
+                ]
+
+                valid_paths = []  # Store working URLs
+                for path in contact_paths:
+                    contact_url = url.rstrip('/') + path
+                    contact_response = session.get(contact_url, timeout=5)
+                    
+                    # If page exists (status code 200), add to valid paths
+                    if contact_response.status_code == 200:
+                        valid_paths.append(contact_url)
+
+                # Now extract emails from all valid contact pages
+                for contact_url in valid_paths:
+                    emails.update(self._find_emails(BeautifulSoup(session.get(contact_url).content, 'html.parser')))
 
             return {"emails": emails or None, "title": title or None, "site_name": site_name or None, "description": description or None, "keywords": keywords or None, "category": category or None, "business_category": business_category or None, "locale": locale or None}
         except requests.RequestException:
