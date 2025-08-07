@@ -75,7 +75,7 @@ def main():
 
     # Wait for all processes to complete
     for process in processes:
-        process.join()
+        process.join(timeout=300)
 
     print("All scrapers have completed.")
 
