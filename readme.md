@@ -51,18 +51,10 @@ I spent days trying to implement proxy rotation, but unfortunately, I couldn't g
 
 If you find this tool useful, consider supporting me with a coffee on [Ko-fi](https://ko-fi.com/xgino). Every sip helps fuel a new line of code. Thank you for your support, and keep coding!
 
+## Legal Disclaimer & Usage
+**Educational & Research Use Only.** This tool is provided "as-is" by **xgino**. By using this software, you agree to the following:
 
-## Disclaimer
-This tool is designed to scrape **publicly visible email addresses** from websites while fully respecting the `robots.txt` guidelines. It ensures that scraping is done in a **timely manner**, avoiding overloading websites, especially since most websites may not have robust servers. This approach minimizes the risk of causing any disruption.
-
-Since the email addresses are **publicly visible** on these websites, collecting them is generally allowed. However, you must be mindful of regulations such as **GDPR** and other data protection laws, especially when handling **personal data**. 
-
-It is essential to:
-- **Use the collected email addresses responsibly**.
-- **Never share or misuse** the data.
-
-In addition, take care in **storing this data securely** to prevent leaks or unauthorized access. Always ensure that any email addresses collected are used **only for lawful and ethical purposes**.
-
-Before using this tool:
-- **Check your local laws** to ensure full compliance.
-- Always **scrape responsibly**, respecting both the websites you scrape from and the privacy of individuals.
+* **Minimizing Impact:** This tool is designed to be "polite." It respects `robots.txt` and uses delays to avoid server strain. Users must ensure their scraping frequency does not disrupt target website operations.
+* **Data Privacy (GDPR/CCPA):** While emails may be publicly visible, collecting them often counts as processing **Personal Data**. This is restricted in many jurisdictions (e.g., EU/ZZP) depending on your intent. **Check your local laws before use.**
+* **Anti-Spam:** Harvesting emails for unsolicited outreach may violate the CAN-SPAM Act or GDPR. You are responsible for obtaining necessary consent before contact.
+* **No Liability:** The author assumes **zero responsibility** for legal consequences, IP bans, or misuse. You use this tool at your **own risk** and agree to indemnify the author against all claims.
